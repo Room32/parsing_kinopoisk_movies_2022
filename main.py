@@ -1,10 +1,10 @@
 import random
-
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
-from fake_useragent import UserAgent
 import time
+import csv
+from tqdm import tqdm
 
 keys_list = ['название', 'оригинальное название', 'продолжительность', 'страна', 'жанр', 'режиссёр']
 title_list = []
@@ -75,10 +75,33 @@ def parsing():
 
     time.sleep(random.randint(2, 5))
 
+def remove_repetitions():
+    seen = {}
+    rows = []
+    with open('movies_list.csv', 'r', encoding='utf-8') as input_file:
+        reader = csv.reader(input_file)
+        header = next(reader)
+        rows.append(header)
+        for row in tqdm(reader):
+            if row[2] not in seen:
+                seen[row[2]] = row
+            else:
+                seen[row[2]] = row
+                row[2] = 'none'
+                rows.append(row)
+
+    for value in seen.values():
+        rows.append(value)
+
+    with open('fixed_movies_list.csv', 'w', newline='', encoding='utf-8') as output_file:
+        writer = csv.writer(output_file)
+        writer.writerows(rows)
+
+
 
 if __name__ == '__main__':
     page = 1
-    while page < 671:
+    while page < 101:
         url = f'https://www.kinopoisk.ru/lists/movies/year--2022/?page={page}'
         download_html()
         parsing()
@@ -95,3 +118,5 @@ if __name__ == '__main__':
     df = pd.DataFrame(dict)
     df.to_csv('movies_list.csv', encoding='utf-8')
     print('КАЖЕТСЯ ВСЁ...')
+    print('ТЕПЕРЬ НЕМНОГО ПОФИКСИМ...')
+    remove_repetitions()
